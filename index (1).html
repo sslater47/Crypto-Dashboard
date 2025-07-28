@@ -104,6 +104,8 @@
         const container = document.getElementById('cards');
         container.innerHTML = '';
         data.forEach(coin => container.appendChild(createCard(coin)));
+        const query = document.getElementById('search').value.toLowerCase();
+        if (query) filterCards(query);
       } catch (error) {
         console.error('Error fetching data:', error);
         document.getElementById('cards').innerHTML = '<p>Failed to load data. Please try again later.</p>';
@@ -121,12 +123,15 @@
         const newTheme = document.body.classList.contains('dark') ? 'dark' : 'light';
         localStorage.setItem('theme', newTheme);
       });
-      document.getElementById('search').addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
+      function filterCards(query) {
         document.querySelectorAll('.card').forEach(card => {
           const text = card.textContent.toLowerCase();
           card.style.display = text.includes(query) ? '' : 'none';
         });
+      }
+
+      document.getElementById('search').addEventListener('input', (e) => {
+        filterCards(e.target.value.toLowerCase());
       });
 
       // Initial data load and interval
