@@ -1,6 +1,6 @@
 # Crypto Dashboard
 
-Simple dashboard showing cryptocurrency information.
+Simple dashboard showing cryptocurrency information with small price charts and a fear & greed index.
 
 ## Testing
 
