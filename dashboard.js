@@ -47,6 +47,54 @@ function renderChart(card, history) {
   });
 }
 
+function predictPrice(history) {
+  if (history.length < 2) return history.at(-1)?.price || 0;
+  const changes = [];
+  for (let i = 1; i < history.length; i++) {
+    const prev = history[i - 1].price;
+    const curr = history[i].price;
+    changes.push(curr / prev - 1);
+  }
+  const avg = changes.reduce((a, b) => a + b, 0) / changes.length;
+  return history.at(-1).price * (1 + avg);
+}
+
+function addInsights(card, predicted, current) {
+  const predEl = document.createElement('div');
+  predEl.className = 'prediction';
+  predEl.textContent = `Predicted 24h Price: $${predicted.toFixed(2)}`;
+  card.appendChild(predEl);
+
+  const diff = (predicted - current) / current;
+  let signal = 'Hold';
+  if (diff > 0.02) signal = 'Buy';
+  else if (diff < -0.02) signal = 'Sell';
+  const signalEl = document.createElement('div');
+  signalEl.className = 'signal';
+  signalEl.textContent = `Signal: ${signal}`;
+  card.appendChild(signalEl);
+}
+
+function addPortfolio(card, coin, updateNetWorth) {
+  const key = `holdings_${coin.id}`;
+  const stored = parseFloat(localStorage.getItem(key)) || 0;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'portfolio';
+  wrapper.innerHTML = `
+    <label>Holdings: <input type="number" step="any" value="${stored}" /></label>
+    <div class="value">Value: $${(stored * coin.current_price).toLocaleString()}</div>
+  `;
+  const input = wrapper.querySelector('input');
+  const valueEl = wrapper.querySelector('.value');
+  input.addEventListener('input', () => {
+    const val = parseFloat(input.value) || 0;
+    localStorage.setItem(key, val);
+    valueEl.textContent = `Value: $${(val * coin.current_price).toLocaleString()}`;
+    updateNetWorth();
+  });
+  card.appendChild(wrapper);
+}
+
 async function fetchFearGreed() {
   const url = 'https://api.alternative.me/fng/?limit=1';
   const res = await fetch(url);
@@ -55,11 +103,25 @@ async function fetchFearGreed() {
   return data.data[0];
 }
 
+let currentData = null;
+
+function updateNetWorth() {
+  if (!currentData) return;
+  let total = 0;
+  for (const coin of currentData) {
+    const amt = parseFloat(localStorage.getItem(`holdings_${coin.id}`)) || 0;
+    total += amt * coin.current_price;
+  }
+  const el = document.getElementById('net-worth');
+  if (el) el.textContent = 'Portfolio Value: $' + total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
 async function fetchData() {
   try {
     const response = await fetch(apiUrl);
     if (!response.ok) throw new Error('API error');
     const data = await response.json();
+    currentData = data;
     const container = document.getElementById('cards');
     container.innerHTML = '';
     for (const coin of data) {
@@ -68,10 +130,15 @@ async function fetchData() {
       try {
         const history = await fetchHistory(coin.id);
         renderChart(card, history);
+        const predicted = predictPrice(history);
+        addInsights(card, predicted, coin.current_price);
       } catch (err) {
         console.error('Error rendering chart:', err);
       }
+      addPortfolio(card, coin, updateNetWorth);
     }
+
+    updateNetWorth();
 
     try {
       const fg = await fetchFearGreed();

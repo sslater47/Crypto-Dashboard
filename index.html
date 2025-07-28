@@ -74,6 +74,14 @@
       margin-top: 0.5rem;
       font-size: 1rem;
     }
+    .prediction, .signal {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .portfolio {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script type="module" src="dashboard.js"></script>
@@ -83,6 +91,7 @@
     <button id="toggle-mode">Toggle Dark/Light</button>
   </div>
   <div id="fear-greed" style="text-align:center;margin-bottom:1rem;"></div>
+  <div id="net-worth" style="text-align:center;margin-bottom:1rem;font-weight:bold;"></div>
   <input type="text" id="search" placeholder="Search coins..." />
   <div id="cards" class="grid"></div>
 </body>
