@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crypto Dashboard</title>
+  <!-- Save this file as index.html in the root of your GitHub Pages branch -->
+  <style>
+    :root {
+      /* Light theme colors */
+      --bg-light: #f0f0f0;
+      --card-bg-light: #ffffff;
+      --text-light: #000000;
+      /* Dark theme colors */
+      --bg-dark: #121212;
+      --card-bg-dark: #1e1e1e;
+      --text-dark: #ffffff;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+    .toggle-container {
+      display: flex;
+      justify-content: flex-end;
+      padding: 1rem;
+    }
+    #search {
+      display: block;
+      margin: 0 auto 1rem auto;
+      padding: 0.5rem;
+      width: 90%;
+      max-width: 400px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+      gap: 1rem;
+      padding: 1rem;
+    }
+    .card {
+      background-color: var(--card-bg-light);
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+    body.dark .card {
+      background-color: var(--card-bg-dark);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .card img {
+      vertical-align: middle;
+      width: 32px;
+      height: 32px;
+    }
+    .card h3 {
+      display: inline-block;
+      margin: 0 0 0 0.5rem;
+      font-size: 1.1rem;
+      vertical-align: middle;
+    }
+    .price, .change {
+      margin-top: 0.5rem;
+      font-size: 1rem;
+    }
+  </style>
+  <script type="module" src="dashboard.js"></script>
+</head>
+<body>
+  <div class="toggle-container">
+    <button id="toggle-mode">Toggle Dark/Light</button>
+  </div>
+  <input type="text" id="search" placeholder="Search coins..." />
+  <div id="cards" class="grid"></div>
+</body>
+</html>
