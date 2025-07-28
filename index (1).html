@@ -84,13 +84,16 @@
     function createCard(coin) {
       const card = document.createElement('div');
       card.className = 'card';
+      // Check for null percentage change before formatting
+      const change = coin.price_change_percentage_24h;
+      const changeText = change != null ? change.toFixed(2) + '%' : 'N/A';
       card.innerHTML = `
         <div class="header">
           <img src="${coin.image}" alt="${coin.name} logo" />
           <h3>${coin.name} (${coin.symbol.toUpperCase()})</h3>
         </div>
         <div class="price">Price: $${coin.current_price.toLocaleString()}</div>
-        <div class="change">24h: ${coin.price_change_percentage_24h.toFixed(2)}%</div>
+        <div class="change">24h: ${changeText}</div>
       `;
       return card;
     }
