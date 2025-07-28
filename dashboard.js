@@ -9,7 +9,10 @@ export function createCard(coin) {
       <img src="${coin.image}" alt="${coin.name} logo" />
       <h3>${coin.name} (${coin.symbol.toUpperCase()})</h3>
     </div>
-    <div class="price">Price: $${coin.current_price.toLocaleString()}</div>
+    <div class="price">Price: $${coin.current_price.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}</div>
     <div class="change">24h: ${coin.price_change_percentage_24h.toFixed(2)}%</div>
     <canvas class="chart" height="80"></canvas>
   `;
@@ -82,14 +85,20 @@ function addPortfolio(card, coin, updateNetWorth) {
   wrapper.className = 'portfolio';
   wrapper.innerHTML = `
     <label>Holdings: <input type="number" step="any" value="${stored}" /></label>
-    <div class="value">Value: $${(stored * coin.current_price).toLocaleString()}</div>
+    <div class="value">Value: $${(stored * coin.current_price).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}</div>
   `;
   const input = wrapper.querySelector('input');
   const valueEl = wrapper.querySelector('.value');
   input.addEventListener('input', () => {
     const val = parseFloat(input.value) || 0;
     localStorage.setItem(key, val);
-    valueEl.textContent = `Value: $${(val * coin.current_price).toLocaleString()}`;
+    valueEl.textContent = `Value: $${(val * coin.current_price).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
     updateNetWorth();
   });
   card.appendChild(wrapper);
