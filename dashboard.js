@@ -77,6 +77,41 @@ function addInsights(card, predicted, current) {
   card.appendChild(signalEl);
 }
 
+// Generate hourly prices by linearly interpolating
+export function generateHourlyPredictions(current, predicted24h) {
+  const hours = [];
+  const now = Date.now();
+  for (let i = 1; i <= 24; i++) {
+    const timestamp = new Date(now + i * 3600 * 1000);
+    const price = current + (predicted24h - current) * (i / 24);
+    hours.push({ time: timestamp, price });
+  }
+  return hours;
+}
+
+function formatPST(date) {
+  return date.toLocaleString('en-US', {
+    timeZone: 'America/Los_Angeles',
+    month: 'short',
+    day: '2-digit',
+    hour: 'numeric',
+    hour12: true
+  });
+}
+
+function addHourlyTable(card, hourly) {
+  const details = document.createElement('details');
+  const summary = document.createElement('summary');
+  summary.textContent = 'Hourly Forecast (Next 24h PST)';
+  details.appendChild(summary);
+  hourly.forEach(entry => {
+    const div = document.createElement('div');
+    div.textContent = `${formatPST(entry.time)}: $${entry.price.toFixed(4)}`;
+    details.appendChild(div);
+  });
+  card.appendChild(details);
+}
+
 function addPortfolio(card, coin, updateNetWorth) {
   const key = `holdings_${coin.id}`;
   const stored = parseFloat(localStorage.getItem(key)) || 0;
@@ -134,6 +169,8 @@ async function fetchData() {
         renderChart(card, history);
         const predicted = predictPrice(history);
         addInsights(card, predicted, coin.current_price);
+        const hourly = generateHourlyPredictions(coin.current_price, predicted);
+        addHourlyTable(card, hourly);
       } catch (err) {
         console.error('Error rendering chart:', err);
       }
