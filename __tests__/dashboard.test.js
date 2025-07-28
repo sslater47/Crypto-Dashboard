@@ -16,4 +16,7 @@ test('createCard returns a DOM element with expected fields', () => {
   expect(card.querySelector('h3').textContent).toBe('Bitcoin (BTC)');
   expect(card.querySelector('.price').textContent).toContain('12,345.67');
   expect(card.querySelector('.change').textContent).toContain('1.23');
+  expect(card.querySelector('.prediction')).toBeInstanceOf(HTMLElement);
+  expect(card.querySelector('.holding')).toBeInstanceOf(HTMLInputElement);
+  expect(card.querySelector('.value')).toBeInstanceOf(HTMLElement);
 });

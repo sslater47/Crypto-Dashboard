@@ -11,6 +11,11 @@ export function createCard(coin) {
     </div>
     <div class="price">Price: $${coin.current_price.toLocaleString()}</div>
     <div class="change">24h: ${coin.price_change_percentage_24h.toFixed(2)}%</div>
+    <div class="prediction"></div>
+    <div class="portfolio">
+      <input type="number" class="holding" placeholder="Holdings" step="any" />
+      <div class="value"></div>
+    </div>
     <canvas class="chart" height="80"></canvas>
   `;
   return card;
@@ -25,6 +30,20 @@ async function fetchHistory(id) {
   if (!res.ok) throw new Error('API error');
   const data = await res.json();
   return data.prices.map(p => ({ time: p[0], price: p[1] }));
+}
+
+function predictPrices(history) {
+  if (history.length < 2) return { day1: NaN, day7: NaN };
+  const diffs = [];
+  for (let i = 1; i < history.length; i++) {
+    diffs.push(history[i].price - history[i - 1].price);
+  }
+  const avg = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+  const last = history[history.length - 1].price;
+  return {
+    day1: last + avg,
+    day7: last + avg * 7
+  };
 }
 
 function renderChart(card, history) {
@@ -68,9 +87,28 @@ async function fetchData() {
       try {
         const history = await fetchHistory(coin.id);
         renderChart(card, history);
+        const preds = predictPrices(history);
+        const predEl = card.querySelector('.prediction');
+        if (predEl)
+          predEl.textContent = `1d: $${preds.day1.toFixed(2)}, 7d: $${preds.day7.toFixed(2)}`;
       } catch (err) {
         console.error('Error rendering chart:', err);
       }
+
+      const input = card.querySelector('.holding');
+      const valueEl = card.querySelector('.value');
+      const key = `holding-${coin.id}`;
+      const stored = parseFloat(localStorage.getItem(key) || '0');
+      if (stored) input.value = stored;
+      const updateValue = () => {
+        const qty = parseFloat(input.value) || 0;
+        valueEl.textContent = `Value: $${(qty * coin.current_price).toLocaleString()}`;
+      };
+      updateValue();
+      input.addEventListener('input', () => {
+        localStorage.setItem(key, input.value);
+        updateValue();
+      });
     }
 
     try {
