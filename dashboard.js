@@ -77,6 +77,38 @@ function addInsights(card, predicted, current) {
   card.appendChild(signalEl);
 }
 
+export function generateHourlyPredictions(current, predicted) {
+  const results = [];
+  const now = new Date();
+  for (let i = 1; i <= 24; i++) {
+    const time = new Date(now.getTime() + i * 60 * 60 * 1000);
+    const price = current + (predicted - current) * (i / 24);
+    results.push({ time, price });
+  }
+  return results;
+}
+
+function addHourlyForecast(card, predictions) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'hourly-forecast';
+  const title = document.createElement('div');
+  title.textContent = 'Hourly Forecast:';
+  wrapper.appendChild(title);
+  const list = document.createElement('ul');
+  predictions.forEach(p => {
+    const li = document.createElement('li');
+    const timeStr = p.time.toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    li.textContent = `${timeStr}: $${p.price.toFixed(2)}`;
+    list.appendChild(li);
+  });
+  wrapper.appendChild(list);
+  card.appendChild(wrapper);
+}
+
 function addPortfolio(card, coin, updateNetWorth) {
   const key = `holdings_${coin.id}`;
   const stored = parseFloat(localStorage.getItem(key)) || 0;
@@ -134,6 +166,8 @@ async function fetchData() {
         renderChart(card, history);
         const predicted = predictPrice(history);
         addInsights(card, predicted, coin.current_price);
+        const hourly = generateHourlyPredictions(coin.current_price, predicted);
+        addHourlyForecast(card, hourly);
       } catch (err) {
         console.error('Error rendering chart:', err);
       }
