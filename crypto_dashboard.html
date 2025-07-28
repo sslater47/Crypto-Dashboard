@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <title>Crypto Dashboard</title>
+  <style>
+    :root { --bg-light: #f0f0f0; --bg-dark: #121212; --card-bg-light: #fff; --card-bg-dark: #1e1e1e; --text-light: #000; --text-dark: #fff; }
+    body { margin:0; font-family: sans-serif; background-color: var(--bg-light); color: var(--text-light); transition: background-color 0.3s, color 0.3s; }
+    body.dark { background-color: var(--bg-dark); color: var(--text-dark); }
+    .toggle-container { display: flex; justify-content: flex-end; padding: 1rem; }
+    #search { margin:1rem; padding:0.5rem; width: calc(100% - 2rem); max-width:400px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:1rem; padding:1rem; }
+    .card { background-color: var(--card-bg-light); border-radius:8px; padding:1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background-color 0.3s; }
+    body.dark .card { background-color: var(--card-bg-dark); box-shadow:0 2px 4px rgba(0,0,0,0.5); }
+    .card img { width:32px; height:32px; }
+    .card .symbol { text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <div class='toggle-container'>
+    <button id='toggle-mode'>Toggle Dark/Light</button>
+  </div>
+  <input type='text' id='search' placeholder='Search...'>
+  <div class='grid' id='cards'></div>
+  <script>
+    const coins = ['cronos','bitcoin','ripple','ethereum','cardano','hedera-hashgraph','loaded-lions'];
+    const cardsContainer = document.getElementById('cards');
+    function createCard(coin){ const card = document.createElement('div'); card.className='card'; card.id = coin.id;
+      card.innerHTML = `
+        <div class='header'><img src='${coin.image}' alt='${coin.name}'/><h3>${coin.name} (<span class='symbol'>${coin.symbol}</span>)</h3></div>
+        <div class='price'>$${coin.current_price.toLocaleString()}</div>
+        <div class='change'>24h: ${coin.price_change_percentage_24h.toFixed(2)}%</div>
+      `;
+      return card;
+    }
+    async function fetchData(){
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids='+coins.join(',')+'&order=market_cap_desc&per_page=7&page=1&sparkline=false');
+        const data = await res.json();
+        cardsContainer.innerHTML='';
+        data.forEach(c => cardsContainer.appendChild(createCard(c)));
+      } catch(err){ console.error(err); }
+    }
+    fetchData();
+    setInterval(fetchData,60000);
+    document.getElementById('toggle-mode').addEventListener('click', ()=>{
+      document.body.classList.toggle('dark');
+      localStorage.setItem('theme', document.body.classList.contains('dark')?'dark':'light');
+    });
+    window.onload = ()=>{ if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark'); };
+    document.getElementById('search').addEventListener('input', e=>{
+      const q=e.target.value.toLowerCase();
+      document.querySelectorAll('.card').forEach(card=>{
+        const name=card.querySelector('h3').textContent.toLowerCase();
+        card.style.display = name.includes(q)?'block':'none';
+      });
+    });
+  </script>
+</body>
+</html>
