@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crypto Dashboard</title>
+  <!-- Save this file as index.html in the root of your GitHub Pages branch -->
+  <style>
+    :root {
+      /* Light theme colors */
+      --bg-light: #f0f0f0;
+      --card-bg-light: #ffffff;
+      --text-light: #000000;
+      /* Dark theme colors */
+      --bg-dark: #121212;
+      --card-bg-dark: #1e1e1e;
+      --text-dark: #ffffff;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+    .toggle-container {
+      display: flex;
+      justify-content: flex-end;
+      padding: 1rem;
+    }
+    #search {
+      display: block;
+      margin: 0 auto 1rem auto;
+      padding: 0.5rem;
+      width: 90%;
+      max-width: 400px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+      gap: 1rem;
+      padding: 1rem;
+    }
+    .card {
+      background-color: var(--card-bg-light);
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+    body.dark .card {
+      background-color: var(--card-bg-dark);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .card img {
+      vertical-align: middle;
+      width: 32px;
+      height: 32px;
+    }
+    .card h3 {
+      display: inline-block;
+      margin: 0 0 0 0.5rem;
+      font-size: 1.1rem;
+      vertical-align: middle;
+    }
+    .price, .change {
+      margin-top: 0.5rem;
+      font-size: 1rem;
+    }
+  </style>
+  <script defer>
+    // IDs for the coins to fetch from CoinGecko
+    const coins = ['cronos','bitcoin','ripple','ethereum','cardano','hedera-hashgraph','loaded-lions'];
+    const apiUrl = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=' + coins.join(',') + '&order=market_cap_desc&per_page=7&page=1&sparkline=false';
+
+    // Build a card element for a coin
+    function createCard(coin) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="header">
+          <img src="${coin.image}" alt="${coin.name} logo" />
+          <h3>${coin.name} (${coin.symbol.toUpperCase()})</h3>
+        </div>
+        <div class="price">Price: $${coin.current_price.toLocaleString()}</div>
+        <div class="change">24h: ${coin.price_change_percentage_24h.toFixed(2)}%</div>
+      `;
+      return card;
+    }
+
+    // Fetch data and update the UI
+    async function fetchData() {
+      try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error('API error');
+        const data = await response.json();
+        const container = document.getElementById('cards');
+        container.innerHTML = '';
+        data.forEach(coin => container.appendChild(createCard(coin)));
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        document.getElementById('cards').innerHTML = '<p>Failed to load data. Please try again later.</p>';
+      }
+    }
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', () => {
+      const theme = localStorage.getItem('theme') || 'light';
+      if (theme === 'dark') document.body.classList.add('dark');
+
+      // Event listeners
+      document.getElementById('toggle-mode').addEventListener('click', () => {
+        document.body.classList.toggle('dark');
+        const newTheme = document.body.classList.contains('dark') ? 'dark' : 'light';
+        localStorage.setItem('theme', newTheme);
+      });
+      document.getElementById('search').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('.card').forEach(card => {
+          const text = card.textContent.toLowerCase();
+          card.style.display = text.includes(query) ? '' : 'none';
+        });
+      });
+
+      // Initial data load and interval
+      fetchData();
+      setInterval(fetchData, 60000); // refresh every 60 seconds
+    });
+  </script>
+</head>
+<body>
+  <div class="toggle-container">
+    <button id="toggle-mode">Toggle Dark/Light</button>
+  </div>
+  <input type="text" id="search" placeholder="Search coins..." />
+  <div id="cards" class="grid"></div>
+</body>
+</html>
