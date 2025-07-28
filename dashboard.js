@@ -3,6 +3,7 @@
 export function createCard(coin) {
   const card = document.createElement('div');
   card.className = 'card';
+  card.dataset.id = coin.id;
   card.innerHTML = `
     <div class="header">
       <img src="${coin.image}" alt="${coin.name} logo" />
@@ -10,12 +11,49 @@ export function createCard(coin) {
     </div>
     <div class="price">Price: $${coin.current_price.toLocaleString()}</div>
     <div class="change">24h: ${coin.price_change_percentage_24h.toFixed(2)}%</div>
+    <canvas class="chart" height="80"></canvas>
   `;
   return card;
 }
 
 const coins = ['cronos','bitcoin','ripple','ethereum','cardano','hedera-hashgraph','loaded-lions'];
 const apiUrl = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=' + coins.join(',') + '&order=market_cap_desc&per_page=7&page=1&sparkline=false';
+
+async function fetchHistory(id) {
+  const url = `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=7`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('API error');
+  const data = await res.json();
+  return data.prices.map(p => ({ time: p[0], price: p[1] }));
+}
+
+function renderChart(card, history) {
+  const ctx = card.querySelector('canvas').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: history.map(h => new Date(h.time).toLocaleDateString()),
+      datasets: [{
+        data: history.map(h => h.price),
+        borderColor: 'blue',
+        fill: false,
+        tension: 0.1
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { display: false } } }
+    }
+  });
+}
+
+async function fetchFearGreed() {
+  const url = 'https://api.alternative.me/fng/?limit=1';
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('API error');
+  const data = await res.json();
+  return data.data[0];
+}
 
 async function fetchData() {
   try {
@@ -24,7 +62,24 @@ async function fetchData() {
     const data = await response.json();
     const container = document.getElementById('cards');
     container.innerHTML = '';
-    data.forEach(coin => container.appendChild(createCard(coin)));
+    for (const coin of data) {
+      const card = createCard(coin);
+      container.appendChild(card);
+      try {
+        const history = await fetchHistory(coin.id);
+        renderChart(card, history);
+      } catch (err) {
+        console.error('Error rendering chart:', err);
+      }
+    }
+
+    try {
+      const fg = await fetchFearGreed();
+      const fgEl = document.getElementById('fear-greed');
+      fgEl.textContent = `Fear & Greed Index: ${fg.value} (${fg.value_classification})`;
+    } catch (err) {
+      console.error('Error fetching fear/greed index:', err);
+    }
   } catch (error) {
     console.error('Error fetching data:', error);
     document.getElementById('cards').innerHTML = '<p>Failed to load data. Please try again later.</p>';
